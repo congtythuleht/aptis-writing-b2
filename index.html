@@ -537,7 +537,7 @@ ol.check { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14
   <div class="card">
     <h3 id="gemT">Chấm bằng Gemini</h3>
     <div class="ai-ask-body">
-      <p>Dùng khi Claude không chấm được: trang tự chuyển sang Gemini. Cần <b>Gemini API key</b> (miễn phí) của bạn:</p>
+      <p id="gemIntro">Dùng khi Claude không chấm được: trang tự chuyển sang Gemini. Cần <b>Gemini API key</b> (miễn phí) của bạn:</p>
       <ul><li>Vào <b>aistudio.google.com</b>, đăng nhập Google</li><li>Bấm <b>Get API key</b> → <b>Create API key</b></li><li>Copy key và dán vào ô dưới</li></ul>
       <p class="note" style="margin-top:8px">Key chỉ lưu trên trình duyệt này và chỉ gửi tới Google khi chấm. Đừng lưu key trên máy dùng chung.</p>
     </div>
@@ -3433,6 +3433,7 @@ Rules: list only REAL mistakes (max 15) – never list a sentence that is alread
       : GEM.ready() ? "AI chấm: Gemini"
       : aiState === "prompt" ? "AI chấm: chưa bật"
       : aiState === "denied" ? "AI chấm: đang bị tắt"
+      : !window.claude ? "Chấm offline · bấm Gemini để bật AI"
       : "Chấm offline · AI: dùng nút “Chấm bằng AI khác”";
     p.querySelector("span").textContent = txt;
     p.title = SAMPLE ? "AI chấm dùng lượt Claude của tài khoản bạn"
@@ -3502,6 +3503,11 @@ Rules: list only REAL mistakes (max 15) – never list a sentence that is alread
   // ---- hộp cài đặt Gemini ----
   function openGem() {
     $("#gemKey").value = GEM.key(); $("#gemModel").value = GEM.model();
+    // ngoài claude.ai (GitHub Pages, file offline) Gemini là giám khảo chính
+    $("#gemT").textContent = window.claude ? "Chấm bằng Gemini" : "Bật AI chấm bằng Gemini";
+    $("#gemIntro").innerHTML = window.claude
+      ? "Dùng khi Claude không chấm được: trang tự chuyển sang Gemini. Cần <b>Gemini API key</b> (miễn phí) của bạn:"
+      : "Gemini sẽ chấm bài như giám khảo Aptis: kiểm tra đúng đề, chỉ lỗi, viết lại bài chuẩn B2. Cần <b>Gemini API key</b> (miễn phí) của bạn:";
     const m = $("#gemMsg"); m.className = "note";
     m.textContent = GEM.net === false ? GEM_MSG.gem_network : GEM.key() ? "Đã lưu key trên trình duyệt này." : "";
     $("#gemDlg").hidden = false; setTimeout(() => $("#gemKey").focus(), 30);
