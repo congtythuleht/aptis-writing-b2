@@ -48,7 +48,9 @@ nav.tabs::-webkit-scrollbar { display: none }
 nav.tabs a { text-decoration: none; color: var(--muted); padding: 8px 12px; border-radius: 8px; font-weight: 500; font-size: 15px; white-space: nowrap }
 nav.tabs a[aria-current="page"] { background: var(--accent-2); color: var(--accent) }
 nav.tabs a:hover { color: var(--ink) }
-.ai-pill { margin-left: auto; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px }
+.top-right { margin-left: auto; display: flex; align-items: center; gap: 2px; flex-wrap: wrap; white-space: nowrap }
+.top-right .btn.small { padding: 4px 8px }
+.ai-pill { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px }
 .ai-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: inline-block }
 .ai-pill.on i { background: var(--green) }
 
@@ -289,6 +291,10 @@ ol.check { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important } }
 </style>
+<script>
+  // Mặc định màu sáng; người dùng có thể đổi sang tối bằng nút ở thanh trên (nhớ trên trình duyệt này)
+  (function () { var t = "light"; try { t = JSON.parse(localStorage.getItem("aw:theme")) || "light"; } catch (e) { } document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light"); })();
+</script>
 
 <header class="top">
   <div class="wrap">
@@ -301,8 +307,11 @@ ol.check { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14
       <a href="#b2" data-view="b2">Chuẩn B2</a>
       <a href="#progress" data-view="progress">Tiến độ</a>
     </nav>
-    <div class="ai-pill" id="aiPill" title="Đang kiểm tra AI chấm…"><i></i><span>AI: đang kiểm tra…</span><button type="button" class="btn small ai" id="aiSetup" hidden>Bật AI chấm</button><button type="button" class="btn small ghost" id="gemBtn" title="Cài Gemini API key để chấm bằng Gemini khi Claude không chấm được">Gemini</button></div>
-    <button type="button" class="btn small ghost" id="helpBtn">Hướng dẫn</button>
+    <div class="top-right">
+      <div class="ai-pill" id="aiPill" title="Đang kiểm tra AI chấm…"><i></i><span>AI: đang kiểm tra…</span><button type="button" class="btn small ai" id="aiSetup" hidden>Bật AI chấm</button><button type="button" class="btn small ghost" id="gemBtn" title="Cài Gemini API key để chấm bằng Gemini khi Claude không chấm được">Gemini</button></div>
+      <button type="button" class="btn small ghost" id="themeBtn" title="Đổi màu sáng / tối">🌙 Tối</button>
+      <button type="button" class="btn small ghost" id="helpBtn">Hướng dẫn</button>
+    </div>
   </div>
 </header>
 
@@ -3429,15 +3438,17 @@ Rules: list only REAL mistakes (max 15) – never list a sentence that is alread
   function paintPill() {
     const p = $("#aiPill"), btn = $("#aiSetup"); p.classList.toggle("on", !!SAMPLE || GEM.ready());
     const gb = $("#gemBtn"); if (gb) { gb.textContent = GEM.key() ? (GEM.net === false ? "Gemini ✕" : "Gemini ✓") : "Gemini"; gb.title = GEM.key() ? (GEM.net === false ? GEM_MSG.gem_network : "Đã cài Gemini API key – bấm để đổi / xóa") : "Cài Gemini API key để chấm bằng Gemini khi Claude không chấm được"; }
-    const txt = SAMPLE ? "AI chấm chi tiết: sẵn sàng" + (GEM.ready() ? " · Gemini dự phòng" : "")
-      : GEM.ready() ? "AI chấm: Gemini"
+    // chữ ngắn để thanh trên không bị xuống dòng; giải thích đầy đủ nằm trong chú thích (title)
+    const txt = SAMPLE ? (GEM.ready() ? "AI: Claude + Gemini" : "AI: Claude sẵn sàng")
+      : GEM.ready() ? "AI: Gemini sẵn sàng"
       : aiState === "prompt" ? "AI chấm: chưa bật"
-      : aiState === "denied" ? "AI chấm: đang bị tắt"
-      : !window.claude ? "Chấm offline · bấm Gemini để bật AI"
-      : "Chấm offline · AI: dùng nút “Chấm bằng AI khác”";
+      : aiState === "denied" ? "AI chấm: đang tắt"
+      : "Chấm offline";
     p.querySelector("span").textContent = txt;
-    p.title = SAMPLE ? "AI chấm dùng lượt Claude của tài khoản bạn"
+    p.title = SAMPLE ? "AI chấm dùng lượt Claude của tài khoản bạn" + (GEM.ready() ? "; Gemini tự chấm thay khi Claude lỗi." : ".")
+      : GEM.ready() ? "AI chấm bằng Gemini (API key lưu trên trình duyệt này)."
       : aiState === "prompt" || aiState === "denied" ? "Bấm “Bật AI chấm” để cho phép trang dùng Claude (tính vào lượt dùng của tài khoản bạn)."
+      : !window.claude ? "Đang chấm offline. Bấm nút “Gemini” để cài Gemini API key và bật AI chấm chi tiết."
       : "claude.ai chưa cho trang dùng Claude ở tài khoản / chế độ xem này (thường gặp khi chưa đăng nhập hoặc mở link chia sẻ). Bấm “Chấm bằng AI khác” dưới mỗi bài để copy đề + bài sang Claude / Gemini / ChatGPT.";
     if (btn) { btn.hidden = !!SAMPLE || !(aiState === "prompt" || aiState === "denied"); btn.textContent = aiState === "denied" ? "Mở bảng Quyền để bật AI" : "Bật AI chấm"; }
   }
@@ -3673,6 +3684,9 @@ Rules: list only REAL mistakes (max 15) – never list a sentence that is alread
   // ---------- init ----------
   renderFilters(); renderList(); renderForms(); renderVocab(); renderWelcome();
   $("#aiSetup").addEventListener("click", setupAI);
+  function paintTheme() { const dark = document.documentElement.getAttribute("data-theme") === "dark"; $("#themeBtn").textContent = dark ? "☀️ Sáng" : "🌙 Tối"; }
+  $("#themeBtn").addEventListener("click", () => { const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", next); store.set("theme", next); paintTheme(); });
+  paintTheme();
   $("#helpBtn").addEventListener("click", () => { store.set("hideWelcome", false); renderWelcome(); location.hash = "practice"; setTimeout(() => $("#welcome").scrollIntoView({ block: "start" }), 30); });
   // Lần đầu: nạp một bài ví dụ có lỗi để thấy cách chấm
   if (!store.get("seen", false)) {
